@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Window Management API Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    .screen {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+    button {
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Connected Displays</h1>
+
+  <div id="screens"></div>
+
+<script>
+  const openedWindows = new Map();
+
+  async function loadScreens() {
+    if (!('getScreenDetails' in window)) {
+      document.body.innerHTML +=
+        '<p>Your browser does not support the Window Management API.</p>';
+      return;
+    }
+
+    try {
+      const screenDetails = await window.getScreenDetails();
+
+      const container = document.getElementById('screens');
+      container.innerHTML = '';
+
+      screenDetails.screens.forEach((screen, index) => {
+        const div = document.createElement('div');
+        div.className = 'screen';
+
+        div.innerHTML = `
+          <strong>Display ${index + 1}</strong><br>
+          Resolution: ${screen.width} × ${screen.height}<br>
+          Position: (${screen.left}, ${screen.top})<br>
+          Primary: ${screen.isPrimary}<br>
+        `;
+
+        const openBtn = document.createElement('button');
+        openBtn.textContent = 'Open window here';
+
+        openBtn.onclick = () => {
+          const win = window.open(
+            'https://docs.python.org/3/library/http.server.html',
+            `display-${index}`,
+            `left=${screen.left},
+             top=${screen.top},
+             width=${screen.width},
+             height=${screen.height}`
+          );
+
+          openedWindows.set(index, win);
+        };
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close window';
+        closeBtn.style.marginLeft = '8px';
+
+        closeBtn.onclick = () => {
+          const win = openedWindows.get(index);
+
+          if (win && !win.closed) {
+            win.close();
+            openedWindows.delete(index);
+          }
+        };
+
+        div.appendChild(openBtn);
+        div.appendChild(closeBtn);
+        container.appendChild(div);
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Permission denied or API unavailable');
+    }
+  }
+
+  loadScreens();
+</script>
+
+</body>
+</html>
