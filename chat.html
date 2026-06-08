@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Chat Controller</title>
+  <title>Chat Window</title>
   <style>
     body {
       font-family: sans-serif;
@@ -33,9 +33,7 @@
   </style>
 </head>
 <body>
-  <h1>Controller Window</h1>
-
-  <button id="open">Open 2 Chat Windows</button>
+  <h1 id="title"></h1>
 
   <div id="messages"></div>
 
@@ -43,6 +41,11 @@
   <button id="send">Send</button>
 
   <script>
+    const params = new URLSearchParams(location.search);
+    const sender = params.get("name") || "Chat";
+
+    document.getElementById("title").textContent = sender;
+
     const channel = new BroadcastChannel("multi-monitor-chat");
 
     function getMessages() {
@@ -65,7 +68,7 @@
       container.scrollTop = container.scrollHeight;
     }
 
-    function addMessage(sender, text) {
+    function addMessage(text) {
       const messages = getMessages();
 
       messages.push({
@@ -83,20 +86,6 @@
       render();
     }
 
-    document.getElementById("open").onclick = () => {
-        window.open(
-            "chat.html?name=WindowA",
-            "WindowA",
-            "width=800,height=600,left=0,top=0"
-        );
-
-        window.open(
-            "chat.html?name=WindowB",
-            "WindowB",
-            "width=800,height=600,left=2000,top=0"
-        );
-    };
-
     document.getElementById("send").onclick = () => {
       const input = document.getElementById("text");
 
@@ -104,7 +93,7 @@
         return;
       }
 
-      addMessage("Controller", input.value);
+      addMessage(input.value);
       input.value = "";
     };
 
