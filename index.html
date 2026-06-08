@@ -2,121 +2,203 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Chat Controller</title>
+  <title>16 Stream Decode Grid</title>
+
   <style>
     body {
+      margin: 0;
+      background: #111;
+      color: white;
       font-family: sans-serif;
-      max-width: 800px;
-      margin: 20px auto;
     }
 
-    #messages {
-      border: 1px solid #ccc;
-      height: 300px;
-      overflow-y: auto;
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding: 6px;
+    }
+
+    .cell {
+      position: relative;
+      background: black;
+    }
+
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: black;
+    }
+
+    .label {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      font-size: 12px;
+      background: rgba(0,0,0,0.6);
+      padding: 2px 4px;
+      border-radius: 3px;
+      z-index: 2;
+    }
+
+    #controls {
       padding: 10px;
-      margin: 10px 0;
-    }
-
-    .msg {
-      margin: 4px 0;
-    }
-
-    input {
-      width: 80%;
-      padding: 8px;
+      background: #222;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     button {
-      padding: 8px;
+      padding: 6px 12px;
+      margin-right: 10px;
     }
   </style>
 </head>
+
 <body>
-  <h1>Controller Window</h1>
 
-  <button id="open">Open 2 Chat Windows</button>
+<div id="controls">
+  <label>
+    4K:
+    <input id="count2160" type="number" min="0" value="0" style="width:60px">
+  </label>
 
-  <div id="messages"></div>
+  <label>
+    1080p:
+    <input id="count1080" type="number" min="0" value="0" style="width:60px">
+  </label>
 
-  <input id="text" placeholder="Type message..." />
-  <button id="send">Send</button>
+  <label>
+    480p:
+    <input id="count480" type="number" min="0" value="0" style="width:60px">
+  </label>
 
-  <script>
-    const channel = new BroadcastChannel("multi-monitor-chat");
+  <label>
+    360p:
+    <input id="count360" type="number" min="0" value="0" style="width:60px">
+  </label>
 
-    function getMessages() {
-      return JSON.parse(localStorage.getItem("messages") || "[]");
+  <button id="start">Start Streams</button>
+  <button id="stop">Stop</button>
+</div>
+
+<div id="grid"></div>
+
+<script>
+const grid = document.getElementById("grid");
+const videos = [];
+
+function createPlayer(labelText, src) {
+  const cell = document.createElement("div");
+  cell.className = "cell";
+
+  const label = document.createElement("div");
+  label.className = "label";
+  label.textContent = labelText;
+
+  const video = document.createElement("video");
+
+  video.src = src;
+  video.autoplay = true;
+  video.muted = true;
+  video.loop = true;
+  video.playsInline = true;
+  video.controls = false;
+  video.preload = "auto";
+
+  video.addEventListener("error", () => {
+    console.error(`${labelText} error`);
+
+    console.log("src:", video.currentSrc);
+    console.log("networkState:", video.networkState);
+    console.log("readyState:", video.readyState);
+    console.log("mediaError:", video.error);
+
+    if (video.error) {
+      console.log("code:", video.error.code);
+
+      const codes = {
+        1: "MEDIA_ERR_ABORTED",
+        2: "MEDIA_ERR_NETWORK",
+        3: "MEDIA_ERR_DECODE",
+        4: "MEDIA_ERR_SRC_NOT_SUPPORTED"
+      };
+
+      console.log("meaning:", codes[video.error.code]);
     }
+  });
 
-    function setMessages(messages) {
-      localStorage.setItem("messages", JSON.stringify(messages));
-    }
+  cell.appendChild(label);
+  cell.appendChild(video);
+  grid.appendChild(cell);
 
-    function render() {
-      const container = document.getElementById("messages");
+  return video;
+}
 
-      container.innerHTML = getMessages()
-        .map(
-          m => `<div class="msg"><strong>${m.sender}:</strong> ${m.text}</div>`
-        )
-        .join("");
+function start() {
+  stop();
 
-      container.scrollTop = container.scrollHeight;
-    }
+  const count2160 = Number(document.getElementById("count2160").value) || 0;
+  const count1080 = Number(document.getElementById("count1080").value) || 0;
+  const count480  = Number(document.getElementById("count480").value) || 0;
+  const count360  = Number(document.getElementById("count360").value) || 0;
 
-    function addMessage(sender, text) {
-      const messages = getMessages();
+  const streams = [];
 
-      messages.push({
-        sender,
-        text,
-        timestamp: Date.now()
-      });
+  for (let i = 1; i <= count2160; i++) {
+    streams.push({
+      label: `2160p-${i}`,
+      src: `streams_2160p/stream${i}_.m3u8`
+    });
+  }
 
-      setMessages(messages);
+  for (let i = 1; i <= count1080; i++) {
+    streams.push({
+      label: `1080p-${i}`,
+      src: `streams_1080p/stream${i}_.m3u8`
+    });
+  }
 
-      channel.postMessage({
-        type: "messages-updated"
-      });
+  for (let i = 1; i <= count480; i++) {
+    streams.push({
+      label: `480p-${i}`,
+      src: `streams_480p/stream${i}_.m3u8`
+    });
+  }
 
-      render();
-    }
+  for (let i = 1; i <= count360; i++) {
+    streams.push({
+      label: `360p-${i}`,
+      src: `streams_360p/stream${i}_.m3u8`
+    });
+  }
 
-    document.getElementById("open").onclick = () => {
-        window.open(
-            "chat.html?name=WindowA",
-            "WindowA",
-            "width=800,height=600,left=0,top=0"
-        );
+  streams.forEach(stream => {
+    const video = createPlayer(stream.label, stream.src);
+    videos.push(video);
 
-        window.open(
-            "chat.html?name=WindowB",
-            "WindowB",
-            "width=800,height=600,left=2000,top=0"
-        );
-    };
+    video.play().catch(err => {
+      console.warn(`Autoplay blocked for ${stream.label}`, err);
+    });
+  });
+}
 
-    document.getElementById("send").onclick = () => {
-      const input = document.getElementById("text");
+function stop() {
+  videos.forEach(v => {
+    v.pause();
+    v.removeAttribute("src");
+    v.load();
+  });
 
-      if (!input.value.trim()) {
-        return;
-      }
+  videos.length = 0;
+  grid.innerHTML = "";
+}
 
-      addMessage("Controller", input.value);
-      input.value = "";
-    };
+document.getElementById("start").onclick = start;
+document.getElementById("stop").onclick = stop;
+</script>
 
-    channel.onmessage = event => {
-      if (event.data.type === "messages-updated") {
-        render();
-      }
-    };
-
-    window.addEventListener("storage", render);
-
-    render();
-  </script>
 </body>
 </html>

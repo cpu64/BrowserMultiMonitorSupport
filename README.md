@@ -1,44 +1,17 @@
-# Browser Multi-Window Shared State and Event Testing
+# Browser Decode Capabilities
 
 ## Overview
 
-This test application demonstrates communication and state synchronization between multiple browser windows running on the same origin.
+This application is meant for testing the browser video decoding capabilities. It allows to choose up to 16 streams of each: 4k, 1080p, 480p, 360p videos.
 
-The application consists of:
+The applications is packaged as a docker image, because of the video files.
 
-* A controller window that can open additional chat windows.
-* Multiple chat windows that share the same message history.
-* Real-time event propagation between windows.
+It's currently using HLS for video streaming which is used for livestream replays. \<video\> tags are used for display.
 
-## BroadcastChannel API
-
-The application uses the BroadcastChannel API for real-time communication between browser windows.
-All windows subscribe to the same channel and broadcast update events whenever shared state changes.
-
-## localStorage
-
-The chat history is stored in `localStorage`, which acts as a shared state store accessible by all windows on the same origin.
-
-## Enable Window Management Permission
-
-Open the site settings page for your local test server:
-
-```text
-chrome://settings/content/siteDetails?site=http%3A%2F%2Flocalhost%3A8000
-```
-
-Enable the following permission:
-
-* **Window management** → Allow
-
-This permission is required for the browser to expose detailed multi-screen information.
-
-## Running a Local Test Server
-
-From the directory containing the test page:
+## Running in Docker
 
 ```bash
-python -m http.server 8000
+docker run -it --rm -p 8000:8000 cpu64/browser-decode:latest
 ```
 
 The test page will be available at:
