@@ -1,0 +1,11 @@
+server:
+  # RTSP, RTMP, HLS, WebRTC ports
+  rtspPort: 8554
+  httpPort: 8888
+  webrtc:
+    enabled: yes
+paths:
+  cam0:
+  cam1:
+  cam2:
+  cam3:

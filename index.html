@@ -2,202 +2,205 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>16 Stream Decode Grid</title>
+  <title>WebRTC Grid</title>
 
   <style>
-    body {
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+    }
+
+    body {
       background: #111;
       color: white;
       font-family: sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    #grid {
+    .topbar {
+      padding: 10px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    select {
+      padding: 5px;
+      background: #222;
+      color: white;
+      border: 1px solid #444;
+    }
+
+    .grid {
+      flex: 1;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      padding: 6px;
+      grid-template-rows: repeat(4, 1fr);
+      gap: 8px;
+      padding: 8px;
     }
 
-    .cell {
+    .camera {
       position: relative;
       background: black;
+      border: 1px solid #333;
+      overflow: hidden;
     }
 
-    video {
+    .camera.empty {
+      background: #0a0a0a;
+      border: 1px dashed #222;
+    }
+
+    .camera video {
       width: 100%;
-      height: auto;
-      display: block;
+      height: 100%;
+      object-fit: contain;
       background: black;
     }
 
     .label {
       position: absolute;
-      top: 4px;
-      left: 4px;
-      font-size: 12px;
-      background: rgba(0,0,0,0.6);
-      padding: 2px 4px;
-      border-radius: 3px;
-      z-index: 2;
-    }
-
-    #controls {
-      padding: 10px;
-      background: #222;
-      position: sticky;
-      top: 0;
+      top: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.7);
+      padding: 4px 8px;
+      border-radius: 4px;
       z-index: 10;
-    }
-
-    button {
-      padding: 6px 12px;
-      margin-right: 10px;
+      font-size: 12px;
     }
   </style>
 </head>
 
 <body>
 
-<div id="controls">
-  <label>
-    4K:
-    <input id="count2160" type="number" min="0" value="0" style="width:60px">
-  </label>
-
-  <label>
-    1080p:
-    <input id="count1080" type="number" min="0" value="0" style="width:60px">
-  </label>
-
-  <label>
-    480p:
-    <input id="count480" type="number" min="0" value="0" style="width:60px">
-  </label>
-
-  <label>
-    360p:
-    <input id="count360" type="number" min="0" value="0" style="width:60px">
-  </label>
-
-  <button id="start">Start Streams</button>
-  <button id="stop">Stop</button>
+<div class="topbar">
+  <label>Streams:</label>
+  <select id="streamCount">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+    <option value="13">13</option>
+    <option value="14">14</option>
+    <option value="15">15</option>
+    <option value="16" selected>16</option>
+  </select>
 </div>
 
-<div id="grid"></div>
+<div id="grid" class="grid"></div>
 
 <script>
-const grid = document.getElementById("grid");
-const videos = [];
+const pcMap = new Map();
 
-function createPlayer(labelText, src) {
-  const cell = document.createElement("div");
-  cell.className = "cell";
+function stopStream(id) {
+  const pc = pcMap.get(id);
+  if (pc) {
+    pc.getSenders().forEach(s => s.track && s.track.stop());
+    pc.close();
+    pcMap.delete(id);
+  }
+}
 
-  const label = document.createElement("div");
-  label.className = "label";
-  label.textContent = labelText;
+async function startStream(videoElement, path, id) {
+  const pc = new RTCPeerConnection();
+  pcMap.set(id, pc);
 
-  const video = document.createElement("video");
+  pc.ontrack = (event) => {
+    videoElement.srcObject = event.streams[0];
+  };
 
-  video.src = src;
-  video.autoplay = true;
-  video.muted = true;
-  video.loop = true;
-  video.playsInline = true;
-  video.controls = false;
-  video.preload = "auto";
+  const offer = await pc.createOffer({
+    offerToReceiveVideo: true,
+    offerToReceiveAudio: false
+  });
 
-  video.addEventListener("error", () => {
-    console.error(`${labelText} error`);
+  await pc.setLocalDescription(offer);
 
-    console.log("src:", video.currentSrc);
-    console.log("networkState:", video.networkState);
-    console.log("readyState:", video.readyState);
-    console.log("mediaError:", video.error);
+  await new Promise(resolve => {
+    if (pc.iceGatheringState === "complete") return resolve();
 
-    if (video.error) {
-      console.log("code:", video.error.code);
+    pc.onicegatheringstatechange = () => {
+      if (pc.iceGatheringState === "complete") resolve();
+    };
+  });
 
-      const codes = {
-        1: "MEDIA_ERR_ABORTED",
-        2: "MEDIA_ERR_NETWORK",
-        3: "MEDIA_ERR_DECODE",
-        4: "MEDIA_ERR_SRC_NOT_SUPPORTED"
-      };
-
-      console.log("meaning:", codes[video.error.code]);
+  const response = await fetch(
+    `http://localhost:8889/${path}/whep`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/sdp" },
+      body: pc.localDescription.sdp
     }
-  });
+  );
 
-  cell.appendChild(label);
-  cell.appendChild(video);
-  grid.appendChild(cell);
+  const answer = await response.text();
 
-  return video;
-}
-
-function start() {
-  stop();
-
-  const count2160 = Number(document.getElementById("count2160").value) || 0;
-  const count1080 = Number(document.getElementById("count1080").value) || 0;
-  const count480  = Number(document.getElementById("count480").value) || 0;
-  const count360  = Number(document.getElementById("count360").value) || 0;
-
-  const streams = [];
-
-  for (let i = 1; i <= count2160; i++) {
-    streams.push({
-      label: `2160p-${i}`,
-      src: `streams_2160p/stream${i}_.m3u8`
-    });
-  }
-
-  for (let i = 1; i <= count1080; i++) {
-    streams.push({
-      label: `1080p-${i}`,
-      src: `streams_1080p/stream${i}_.m3u8`
-    });
-  }
-
-  for (let i = 1; i <= count480; i++) {
-    streams.push({
-      label: `480p-${i}`,
-      src: `streams_480p/stream${i}_.m3u8`
-    });
-  }
-
-  for (let i = 1; i <= count360; i++) {
-    streams.push({
-      label: `360p-${i}`,
-      src: `streams_360p/stream${i}_.m3u8`
-    });
-  }
-
-  streams.forEach(stream => {
-    const video = createPlayer(stream.label, stream.src);
-    videos.push(video);
-
-    video.play().catch(err => {
-      console.warn(`Autoplay blocked for ${stream.label}`, err);
-    });
+  await pc.setRemoteDescription({
+    type: "answer",
+    sdp: answer
   });
 }
 
-function stop() {
-  videos.forEach(v => {
-    v.pause();
-    v.removeAttribute("src");
-    v.load();
-  });
+async function buildGrid(count) {
+  const grid = document.getElementById("grid");
 
-  videos.length = 0;
+  // Stop all streams
+  for (let i = 0; i < 16; i++) stopStream(i);
+
+  // Clear UI
   grid.innerHTML = "";
+
+  for (let i = 0; i < 16; i++) {
+    const camId = `cam${i}`;
+
+    const container = document.createElement("div");
+    container.className = "camera";
+
+    const label = document.createElement("div");
+    label.className = "label";
+    label.innerText = camId.toUpperCase();
+
+    const video = document.createElement("video");
+    video.id = camId;
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+
+    container.appendChild(label);
+    container.appendChild(video);
+
+    grid.appendChild(container);
+
+    if (i < count) {
+      startStream(video, camId, i);
+    } else {
+      container.classList.add("empty");
+      video.remove(); // no stream for empty slots
+    }
+  }
 }
 
-document.getElementById("start").onclick = start;
-document.getElementById("stop").onclick = stop;
+// init
+const selector = document.getElementById("streamCount");
+
+buildGrid(parseInt(selector.value));
+
+selector.addEventListener("change", () => {
+  buildGrid(parseInt(selector.value));
+});
 </script>
 
 </body>

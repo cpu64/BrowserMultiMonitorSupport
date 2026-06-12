@@ -1,0 +1,152 @@
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    ports:
+      - "8554:8554"
+      - "8888:8888"
+      - "8889:8889"
+
+  cam0:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip00.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam0
+    depends_on: [mediamtx]
+
+  cam1:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip01.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam1
+    depends_on: [mediamtx]
+
+  cam2:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip02.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam2
+    depends_on: [mediamtx]
+
+  cam3:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip03.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam3
+    depends_on: [mediamtx]
+
+  cam4:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip04.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam4
+    depends_on: [mediamtx]
+
+  cam5:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip05.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam5
+    depends_on: [mediamtx]
+
+  cam6:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip06.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam6
+    depends_on: [mediamtx]
+
+  cam7:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip07.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam7
+    depends_on: [mediamtx]
+
+  cam8:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip08.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam8
+    depends_on: [mediamtx]
+
+  cam9:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip09.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam9
+    depends_on: [mediamtx]
+
+  cam10:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip10.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam10
+    depends_on: [mediamtx]
+
+  cam11:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip11.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam11
+    depends_on: [mediamtx]
+
+  cam12:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip12.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam12
+    depends_on: [mediamtx]
+
+  cam13:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip13.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam13
+    depends_on: [mediamtx]
+
+  cam14:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip14.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam14
+    depends_on: [mediamtx]
+
+  cam15:
+    image: jrottenberg/ffmpeg:5.1-ubuntu
+    volumes:
+      - ./segments_1080p_WebRTC:/segments
+    command: >
+      -re -stream_loop -1 -i /segments/clip15.mp4
+      -c copy -f rtsp rtsp://mediamtx:8554/cam15
+    depends_on: [mediamtx]
