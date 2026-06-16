@@ -80,6 +80,11 @@
     <input id="count360" type="number" min="0" value="0" style="width:60px">
   </label>
 
+  <label>
+    <input id="fitToScreen" type="checkbox" checked>
+    Fit all streams on screen
+  </label>
+
   <button id="start">Start Streams</button>
   <button id="stop">Stop</button>
 </div>
@@ -147,33 +152,41 @@ function start() {
 
   const streams = [];
 
+  const MAX_STREAMS = 16;
+
   for (let i = 1; i <= count2160; i++) {
+    const streamNum = ((i - 1) % MAX_STREAMS) + 1;
     streams.push({
       label: `2160p-${i}`,
-      src: `streams_2160p/stream${i}_.m3u8`
+      src: `streams_2160p/stream${streamNum}_.m3u8`
     });
   }
 
   for (let i = 1; i <= count1080; i++) {
+    const streamNum = ((i - 1) % MAX_STREAMS) + 1;
     streams.push({
       label: `1080p-${i}`,
-      src: `streams_1080p/stream${i}_.m3u8`
+      src: `streams_1080p/stream${streamNum}_.m3u8`
     });
   }
 
   for (let i = 1; i <= count480; i++) {
+    const streamNum = ((i - 1) % MAX_STREAMS) + 1;
     streams.push({
       label: `480p-${i}`,
-      src: `streams_480p/stream${i}_.m3u8`
+      src: `streams_480p/stream${streamNum}_.m3u8`
     });
   }
 
   for (let i = 1; i <= count360; i++) {
+    const streamNum = ((i - 1) % MAX_STREAMS) + 1;
     streams.push({
       label: `360p-${i}`,
-      src: `streams_360p/stream${i}_.m3u8`
+      src: `streams_360p/stream${streamNum}_.m3u8`
     });
   }
+
+  updateGridLayout(streams.length);
 
   streams.forEach(stream => {
     const video = createPlayer(stream.label, stream.src);
@@ -194,6 +207,23 @@ function stop() {
 
   videos.length = 0;
   grid.innerHTML = "";
+}
+
+window.addEventListener("resize", () => {
+  updateGridLayout(videos.length);
+});
+
+function updateGridLayout(streamCount) {
+  const fit = document.getElementById("fitToScreen").checked;
+
+  if (!fit || streamCount === 0) {
+    grid.style.gridTemplateColumns = "repeat(4, 1fr)";
+    return;
+  }
+
+  const cols = Math.ceil(Math.sqrt(streamCount));
+
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 }
 
 document.getElementById("start").onclick = start;
