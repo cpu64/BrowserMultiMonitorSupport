@@ -10,9 +10,8 @@ chrome://settings/content/siteDetails?site=http%3A%2F%2Flocalhost%3A8000
 
 Enable the following permission:
 
-* **Window management** → Allow
-
-This permission is required for the browser to expose detailed multi-screen information.
+* **Window management** → Allow (Required for the browser to expose detailed multi-screen information.)
+* **Pop-ups and redirects** → Allow (Required to open multiple windows at once.)
 
 ## API Reference
 

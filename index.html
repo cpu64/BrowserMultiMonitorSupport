@@ -1,98 +1,112 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Window Management API Demo</title>
+  <title>Multi-Monitor Window Demo</title>
   <style>
     body {
       font-family: sans-serif;
-      padding: 20px;
-    }
-
-    .screen {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin: 10px 0;
+      padding: 24px;
     }
 
     button {
-      margin-top: 8px;
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
     }
+
+    #status {
+      margin-top: 16px;
+      color: #444;
+    }
+
   </style>
 </head>
 <body>
-  <h1>Connected Displays</h1>
 
-  <div id="screens"></div>
+  <h1>Multi-Monitor Window Management Demo</h1>
 
-<script>
-  const openedWindows = new Map();
+  <button id="openWindows">
+    Open Python on Monitor 1 and Apple on Monitor 2
+  </button>
 
-  async function loadScreens() {
-    if (!('getScreenDetails' in window)) {
-      document.body.innerHTML +=
-        '<p>Your browser does not support the Window Management API.</p>';
-      return;
-    }
+  <div id="status"></div>
 
-    try {
-      const screenDetails = await window.getScreenDetails();
+  <script>
+    const status = document.getElementById('status');
 
-      const container = document.getElementById('screens');
-      container.innerHTML = '';
+    async function openOnMonitors() {
+      if (!('getScreenDetails' in window)) {
+        status.textContent =
+          'Window Management API is not supported in this browser.';
+        return;
+      }
 
-      screenDetails.screens.forEach((screen, index) => {
-        const div = document.createElement('div');
-        div.className = 'screen';
+      try {
+        const screenDetails = await window.getScreenDetails();
+        const screens = screenDetails.screens;
 
-        div.innerHTML = `
-          <strong>Display ${index + 1}</strong><br>
-          Resolution: ${screen.width} × ${screen.height}<br>
-          Position: (${screen.left}, ${screen.top})<br>
-          Primary: ${screen.isPrimary}<br>
-        `;
+        const primaryScreen =
+          screens.find(screen => screen.isPrimary) || screens[0];
 
-        const openBtn = document.createElement('button');
-        openBtn.textContent = 'Open window here';
+        const secondaryScreen =
+          screens.find(screen => !screen.isPrimary);
 
-        openBtn.onclick = () => {
-          const win = window.open(
-            'https://docs.python.org/3/library/http.server.html',
-            `display-${index}`,
-            `left=${screen.left},
-             top=${screen.top},
-             width=${screen.width},
-             height=${screen.height}`
+        // Open Python on primary monitor
+        window.open(
+          'https://docs.python.org/3/library/http.server.html',
+          'python-window',
+          [
+            `left=${primaryScreen.availLeft}`,
+            `top=${primaryScreen.availTop}`,
+            `width=${primaryScreen.availWidth}`,
+            `height=${primaryScreen.availHeight}`
+          ].join(',')
+        );
+
+        if (secondaryScreen) {
+          // Open Apple on secondary monitor
+          window.open(
+            'https://en.wikipedia.org/wiki/Fruit',
+            'apple-window',
+            [
+              `left=${secondaryScreen.availLeft}`,
+              `top=${secondaryScreen.availTop}`,
+              `width=${secondaryScreen.availWidth}`,
+              `height=${secondaryScreen.availHeight}`
+            ].join(',')
           );
 
-          openedWindows.set(index, win);
-        };
+          status.textContent =
+            'Opened Python on the primary monitor and Apple on the secondary monitor.';
+        } else {
+          // Only one monitor available
+          window.open(
+            'https://en.wikipedia.org/wiki/Fruit',
+            'apple-window',
+            [
+              `left=${primaryScreen.availLeft}`,
+              `top=${primaryScreen.availTop}`,
+              `width=${Math.floor(primaryScreen.availWidth)}`,
+              `height=${Math.floor(primaryScreen.availHeight)}`
+            ].join(',')
+          );
 
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = 'Close window';
-        closeBtn.style.marginLeft = '8px';
-
-        closeBtn.onclick = () => {
-          const win = openedWindows.get(index);
-
-          if (win && !win.closed) {
-            win.close();
-            openedWindows.delete(index);
-          }
-        };
-
-        div.appendChild(openBtn);
-        div.appendChild(closeBtn);
-        container.appendChild(div);
-      });
-    } catch (err) {
-      console.error(err);
-      alert('Permission denied or API unavailable');
+          status.textContent =
+            'Only one monitor detected. Both windows were opened on the same display.';
+        }
+      } catch (err) {
+        console.error(err);
+        status.textContent =
+          'Failed to access screen information. Permission may have been denied.';
+      }
     }
-  }
 
-  loadScreens();
-</script>
+    document
+      .getElementById('openWindows')
+      .addEventListener('click', openOnMonitors);
+  </script>
 
 </body>
 </html>
